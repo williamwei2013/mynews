@@ -1,0 +1,72 @@
+{% extends 'news/base.html' %}
+
+{% load staticfiles %}
+
+{% block block_title %}我的新闻{% endblock %}
+
+
+{% block block_body %}
+<link href="{% static 'css/news.css' %}" rel="stylesheet">   
+ <script src="{% static 'js/jquery.js' %}"></script> 
+<script src="{% static 'js/news.js' %}"></script>
+
+      <!-- Main component for a primary marketing message or call to action -->
+      
+  
+   <div class="row">
+
+        <div class="col-sm-8 blog-main">
+    {% for news in search_list %}
+          <div class="blog-post">
+   <a href="{% url 'article_detail' id=news.id %}">{{news.title}}</a>
+
+           
+            
+
+            <p class="blog-post-meta">{{news.publish_date|date:"F j, Y"}}   {{news.author}}
+
+<!--            <p>{{news.message|safe|slice:"10"}}</p>-->
+            <hr>
+            
+          </div><!-- /.blog-post -->
+
+           
+    {% endfor %}
+     
+        
+
+
+      
+
+        </div><!-- /.blog-main -->
+
+        <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+          <div class="sidebar-module sidebar-module-inset">
+            <h4>About</h4>
+            <p>健康生活网是为大家提供健康养生的资讯内容以及母婴健康小常识</p>
+          </div>
+          <div class="sidebar-module">
+            类别
+            <ol class="list-unstyled">
+              <li><a href="#">育儿</a></li>
+              <li><a href="#">母婴</a></li>
+              <li><a href="#">养生</a></li>
+              <li><a href="#">医药</a></li>
+              <li><a href="#">男性</a></li>
+              <li><a href="#">女性</a></li>
+             
+            </ol>
+          </div>
+          <div class="sidebar-module">
+          关联网站
+            <ol class="list-unstyled">
+              <li><a href="#">一个勺子</a></li>
+              <li><a href="#">爱我别走</a></li>
+              <li><a href="#">快乐男声</a></li>
+            </ol>
+          </div>
+        </div><!-- /.blog-sidebar -->
+
+      </div><!-- /.row -->
+  
+{% endblock %}

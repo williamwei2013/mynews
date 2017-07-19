@@ -1,0 +1,59 @@
+{% extends 'news/base.html' %}
+
+{% load staticfiles %}
+
+{% block block_title %}我的新闻{% endblock %}
+
+
+{% block block_body %}
+<link href="{% static 'css/news.css' %}" rel="stylesheet">   
+ <script src="{% static 'js/jquery.js' %}"></script> 
+<script src="{% static 'js/news.js' %}"></script>
+
+      <!-- Main component for a primary marketing message or call to action -->
+      
+    <div id="content" class="row-fluid">
+    <div class="row">
+        <div class="col-md-9">
+        <div id="content-left">
+     
+         <b>{{ news.title}}</b></br>
+{{ news.author}}     {{ news.publish_date|date:'y-m-j f' }}  
+         <p>
+        {{ news.message|safe }}
+        <p></br>
+        <strong id="like_count">{{ news.likes }}</strong> people like this category
+
+{% if user.is_authenticated %}
+        <button id="likes" data-catid="{{news.id}}" class="btn btn-primary" type="button">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        Like
+        </button>
+  
+{% endif %}
+
+</p>
+     
+            <hr>
+
+        </div>
+        </div>
+         <div class="col-md-3">
+             <div id="content-right">
+            热点
+            <hr>
+            <div><a href="{% url 'article_detail' id=news.id %}">{{ news.title|slice:"14"}}..</a></div>
+
+        <div ><a href="{% url 'click_like' id=news.id %}">已赞数{{news.likes}}</a></div>
+
+        </div>
+ 
+
+ 
+  
+
+  </div>
+  </div>
+</div>
+  
+{% endblock %}
