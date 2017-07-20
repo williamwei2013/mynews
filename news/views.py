@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,render_to_response
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -29,6 +29,9 @@ def article_detail(request,id):
     news = get_object_or_404(News, id=id)
     context_dict = {'news': news }
     return render(request, 'news/article_detail.html', context_dict)
+    
+def about(request):
+    return render_to_response( 'news/about.html')
     
 @login_required    
 def click_like(request,id):
@@ -71,12 +74,19 @@ def like_category(request):
     
 def search(request):
     #context = RequestContext(request)
+    error=[]
     if request.method == 'GET':
-        keyword = request.GET['keyword']
+        keyword=request.GET['keyword']
         if keyword:
-            search_list=News.object.all().filter(Q(title__icontains=search_keywords) | Q(message__icontains=search_keywords))
-    context_dict = {'search_list': search_list}      
-    return render(request, 'news/search.html', context_dict)
+            search_list=News.object.all().filter(Q(title__icontains=keywords) | Q(message__icontains=keywords))
+            context_dict = {'search_list': search_list,'keyword':keyword}  
+            print keyword,search_list
+            return render(request, 'news/search.html', context_dict)
+        else:
+            error.append('请输入正确的关键词')
+            context_dict = {'error': error}
+            print error          
+        return render(request, 'news/search.html', context_dict)
     
 
     

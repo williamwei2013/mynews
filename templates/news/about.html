@@ -1,44 +1,31 @@
 {% extends 'news/base.html' %}
 
 {% load staticfiles %}
-
-{% block block_title %}我的新闻{% endblock %}
-
+{% block block_title %}<title>育儿</title>{% endblock %}
+  
 
 {% block block_body %}
-<link href="{% static 'css/news.css' %}" rel="stylesheet">   
- <script src="{% static 'js/jquery.js' %}"></script> 
+<link href="{% static 'css/news.css' %}" rel="stylesheet">  
+<script src="{% static 'js/jquery.js' %}"></script> 
 <script src="{% static 'js/news.js' %}"></script>
+    <!-- Fixed navbar -->
 
       <!-- Main component for a primary marketing message or call to action -->
-      
-  
+ 
    <div class="row">
 
         <div class="col-sm-8 blog-main">
-        {% if keyword %}
-        您搜索的词是{{ keyword }}
-    {% for news in search_list %}
-          <div class="blog-post">
-   <a href="{% url 'article_detail' id=news.id %}">{{news.title}}</a>
-
-           
-            
-
-            <p class="blog-post-meta">{{news.publish_date|date:"F j, Y"}}   {{news.author}}
-
-<!--            <p>{{news.message|safe|slice:"10"}}</p>-->
-            <hr>
-            
-          </div><!-- /.blog-post -->
-
-           
-    {% endfor %}
+    <div class="sidebar-module sidebar-module-inset">
+            <h4>About</h4>
+            {% if content %}
+            <p>{{ content }}</p>
+            {% endif %}
+          </div>
      
         
 
 
-      
+  
 
         </div><!-- /.blog-main -->
 
@@ -70,5 +57,5 @@
         </div><!-- /.blog-sidebar -->
 
       </div><!-- /.row -->
-  
+
 {% endblock %}
