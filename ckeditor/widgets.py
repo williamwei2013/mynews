@@ -11,6 +11,8 @@ from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 
+from js_asset import JS, static
+
 try:
     # Django >=1.7
     from django.forms.utils import flatatt
@@ -30,7 +32,7 @@ class LazyEncoder(DjangoJSONEncoder):
 json_encode = LazyEncoder().encode
 
 DEFAULT_CONFIG = {
-    'skin': 'moono',
+    'skin': 'moono-lisa',
     'toolbar_Basic': [
         ['Source', '-', 'Bold', 'Italic']
     ],
@@ -56,13 +58,17 @@ class CKEditorWidget(forms.Textarea):
     """
     class Media:
         js = ()
-        jquery_url = getattr(settings, 'CKEDITOR_JQUERY_URL', None)
-        if jquery_url:
-            js += (jquery_url, )
         try:
             js += (
-                settings.STATIC_URL + 'ckeditor/ckeditor/ckeditor.js',
-                settings.STATIC_URL + 'ckeditor/ckeditor-init.js',
+                JS('ckeditor/ckeditor-init.js', {
+                    'id': 'ckeditor-init-script',
+                    'data-ckeditor-basepath': getattr(
+                        settings,
+                        'CKEDITOR_BASEPATH',
+                        static('ckeditor/ckeditor/'),
+                    ),
+                }),
+                'ckeditor/ckeditor/ckeditor.js',
             )
         except AttributeError:
             raise ImproperlyConfigured("django-ckeditor requires \
@@ -108,7 +114,7 @@ class CKEditorWidget(forms.Textarea):
     def render(self, name, value, attrs=None):
         if value is None:
             value = ''
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(self.attrs, attrs, name=name)
         self._set_config()
         external_plugin_resources = [[force_text(a), force_text(b), force_text(c)]
                                      for a, b, c in self.external_plugin_resources]
@@ -121,6 +127,15 @@ class CKEditorWidget(forms.Textarea):
             'external_plugin_resources': json_encode(external_plugin_resources)
         }))
 
+    def build_attrs(self, base_attrs, extra_attrs=None, **kwargs):
+        """
+        Helper function for building an attribute dictionary.
+        This is combination of the same method from Django<=1.10 and Django1.11+
+        """
+        attrs = dict(base_attrs, **kwargs)
+        if extra_attrs:
+            attrs.update(extra_attrs)
+        return attrs
+
     def _set_config(self):
-        if not self.config.get('language'):
-            self.config['language'] = get_language()
+        self.config['language'] = get_language()

@@ -13,6 +13,12 @@ class UserlikesAdmin(admin.ModelAdmin):
  
 admin.site.register(Userlikes,UserlikesAdmin)
 
+class UserprofileAdmin(admin.ModelAdmin):
+
+
+    list_display=('user','picture','intro',)
+ 
+admin.site.register(UserProfile,UserprofileAdmin)
 '''
 
 # Register your models here.

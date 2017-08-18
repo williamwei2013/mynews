@@ -6,8 +6,20 @@ from django.shortcuts import get_object_or_404
 from models import *
 import urlparse
 from django.contrib.auth.decorators import login_required 
-from django.http import JsonResponse
+
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import json
+from django.http import JsonResponse
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+#以下是restframwork
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.renderers import JSONRenderer
+from rest_framework.parsers import JSONParser
+from news.models import News
+from news.serializers import NewsSerializer
+
 
 # Create your views here.
 def index(request):
@@ -86,8 +98,41 @@ def search(request):
             error.append('请输入正确的关键词')
             context_dict = {'error': error}
             print error          
-        return render(request, 'news/search.html', context_dict)
-    
+    return render(request, 'news/search.html', context_dict)
+'''
+def ajax_list(request):
+    a = range(100)
+    return jsonResponse(a, safe=False)
+
+  '''
+
+  
+def tt(request):
+    return render_to_response('news/add.html')
+  
+  
+names=list();
+names.append("zhangsa")
+names.append("aa")
+names.append("b")
+names.append("c")
+  
+  
+@csrf_exempt
+def ccc(request):
+    name=request.POST.get("name",None)
+    rtxt="";
+    if name is not None:
+        b=name in names
+        if b:
+            rtxt="名字已经存在！"
+        else:
+            print("名字不存在!")
+            rtxt="名字不存在!"
+        #print("获取的名字是:NU",name) 
+    return HttpResponse(json.dumps({"msg":rtxt})) 
+
+
 
     
     

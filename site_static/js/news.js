@@ -1,14 +1,15 @@
 $(document).ready( function() {
 
     
-    $('#likes').click(function(){
-    var artid;
-    artid = $(this).attr("data-artid");
-    $.get('/news/like_article/', {article_id: artid}, function(data){
+$('#likes').click(function(){
+    var catid;
+    catid = $(this).attr("data-catid");
+    $.get('/news/like_category/', {category_id: catid}, function(data){
                $('#like_count').html(data);
                $('#likes').hide();
+               console.log
     });
-    });
+
 });
 
-
+});

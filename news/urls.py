@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.contrib import admin
 from news.views import *
 import views
 
-urlpatterns = patterns('',
+urlpatterns = [
     # Examples:
     # url(r'^$', 'mynews.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
@@ -15,4 +15,7 @@ urlpatterns = patterns('',
     url(r'^news/click_like/(?P<id>\d+)/$',views.click_like,name='click_like'),
     url(r'^news/like_category/$', views.like_category, name='like_category'),
     url(r'^news/search/$', views.search, name='search'),
-)
+    #url(r'^news/ajax_list/$', views.ajax_list, name='ajax_list'),
+    url(r'^news/ccc/$',views.ccc,name='ccc'),
+    url(r'^news/tt/$',views.tt,name='tt'),
+]

@@ -5,35 +5,58 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.files.storage import default_storage
-from django.http import HttpResponse
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
+from django.utils.html import escape
+from django.utils.module_loading import import_string
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 
-from ckeditor_uploader import image_processing
-from ckeditor_uploader import utils
+from PIL import Image
+
+from ckeditor_uploader import image_processing, utils
 from ckeditor_uploader.forms import SearchForm
 
 
 def get_upload_filename(upload_name, user):
+    user_path = ''
+
     # If CKEDITOR_RESTRICT_BY_USER is True upload file to user specific path.
-    if getattr(settings, 'CKEDITOR_RESTRICT_BY_USER', False):
-        user_path = user.username
-    else:
-        user_path = ''
+    RESTRICT_BY_USER = getattr(settings, 'CKEDITOR_RESTRICT_BY_USER', False)
+    if RESTRICT_BY_USER:
+        try:
+            user_prop = getattr(user, RESTRICT_BY_USER)
+        except AttributeError:
+            user_prop = getattr(user, 'get_username')
+
+        if callable(user_prop):
+            user_path = user_prop()
+        else:
+            user_path = user_prop
 
     # Generate date based path to put uploaded file.
-    date_path = datetime.now().strftime('%Y/%m/%d')
+    # If CKEDITOR_RESTRICT_BY_DATE is True upload file to date specific path.
+    if getattr(settings, 'CKEDITOR_RESTRICT_BY_DATE', True):
+        date_path = datetime.now().strftime('%Y/%m/%d')
+    else:
+        date_path = ''
 
     # Complete upload path (upload_path + date_path).
     upload_path = os.path.join(
-        settings.CKEDITOR_UPLOAD_PATH, user_path, date_path)
+        settings.CKEDITOR_UPLOAD_PATH, user_path, date_path
+    )
 
-    if getattr(settings, "CKEDITOR_UPLOAD_SLUGIFY_FILENAME", True):
+    if (getattr(settings, 'CKEDITOR_UPLOAD_SLUGIFY_FILENAME', True) and
+            not hasattr(settings, 'CKEDITOR_FILENAME_GENERATOR')):
         upload_name = utils.slugify_filename(upload_name)
 
-    return default_storage.get_available_name(os.path.join(upload_path, upload_name))
+    if hasattr(settings, 'CKEDITOR_FILENAME_GENERATOR'):
+        generator = import_string(settings.CKEDITOR_FILENAME_GENERATOR)
+        upload_name = generator(upload_name)
+
+    return default_storage.get_available_name(
+        os.path.join(upload_path, upload_name)
+    )
 
 
 class ImageUploadView(generic.View):
@@ -46,30 +69,61 @@ class ImageUploadView(generic.View):
         uploaded_file = request.FILES['upload']
 
         backend = image_processing.get_backend()
-        self._verify_file(backend, uploaded_file)
+
+        ck_func_num = request.GET.get('CKEditorFuncNum')
+        if ck_func_num:
+            ck_func_num = escape(ck_func_num)
+
+        # Throws an error when an non-image file are uploaded.
+        if not getattr(settings, 'CKEDITOR_ALLOW_NONIMAGE_FILES', True):
+            try:
+                backend.image_verify(uploaded_file)
+            except utils.NotAnImageException:
+                return HttpResponse("""
+                    <script type='text/javascript'>
+                    window.parent.CKEDITOR.tools.callFunction({0}, '', 'Invalid file type.');
+                    </script>""".format(ck_func_num))
+
         saved_path = self._save_file(request, uploaded_file)
-        self._create_thumbnail_if_needed(backend, saved_path)
+        if(str(saved_path).split('.')[1].lower() != 'gif'):
+            self._create_thumbnail_if_needed(backend, saved_path)
         url = utils.get_media_url(saved_path)
 
-        # Respond with Javascript sending ckeditor upload url.
-        return HttpResponse("""
-        <script type='text/javascript'>
-            window.parent.CKEDITOR.tools.callFunction({0}, '{1}');
-        </script>""".format(request.GET['CKEditorFuncNum'], url))
-
-    def _verify_file(self, backend, uploaded_file):
-        try:
-            backend.image_verify(uploaded_file)
-        except utils.NotAnImageException:
-            return self._on_verification_failure()
-
-    def _on_verification_failure(self):
-        pass
+        if ck_func_num:
+            # Respond with Javascript sending ckeditor upload url.
+            return HttpResponse("""
+            <script type='text/javascript'>
+                window.parent.CKEDITOR.tools.callFunction({0}, '{1}');
+            </script>""".format(ck_func_num, url))
+        else:
+            retdata = {'url': url, 'uploaded': '1',
+                       'fileName': uploaded_file.name}
+            return JsonResponse(retdata)
 
     @staticmethod
     def _save_file(request, uploaded_file):
         filename = get_upload_filename(uploaded_file.name, request.user)
-        saved_path = default_storage.save(filename, uploaded_file)
+
+        img_name, img_format = os.path.splitext(filename)
+        IMAGE_QUALITY = getattr(settings, "IMAGE_QUALITY", 60)
+
+        if(str(img_format).lower() == "png"):
+
+            img = Image.open(uploaded_file)
+            img = img.resize(img.size, Image.ANTIALIAS)
+            saved_path = default_storage.save("{}.jpg".format(img_name), uploaded_file)
+            img.save("{}.jpg".format(img_name), quality=IMAGE_QUALITY, optimize=True)
+
+        elif(str(img_format).lower() == "jpg" or str(img_format).lower() == "jpeg"):
+
+            img = Image.open(uploaded_file)
+            img = img.resize(img.size, Image.ANTIALIAS)
+            saved_path = default_storage.save(filename, uploaded_file)
+            img.save(saved_path, quality=IMAGE_QUALITY, optimize=True)
+
+        else:
+            saved_path = default_storage.save(filename, uploaded_file)
+
         return saved_path
 
     @staticmethod
@@ -93,7 +147,7 @@ def get_image_files(user=None, path=''):
 
     restrict = getattr(settings, 'CKEDITOR_RESTRICT_BY_USER', False)
     if user and not user.is_superuser and restrict:
-        user_path = user.username
+        user_path = user.get_username()
     else:
         user_path = ''
 
@@ -128,17 +182,17 @@ def get_files_browse_urls(user=None):
     files = []
     for filename in get_image_files(user=user):
         src = utils.get_media_url(filename)
-        visible_filename = None
         if getattr(settings, 'CKEDITOR_IMAGE_BACKEND', None):
             if is_image(src):
                 thumb = utils.get_media_url(utils.get_thumb_filename(filename))
             else:
                 thumb = utils.get_icon_filename(filename)
-                visible_filename = os.path.split(filename)[1]
-                if len(visible_filename) > 20:
-                    visible_filename = visible_filename[0:19] + '...'
+            visible_filename = os.path.split(filename)[1]
+            if len(visible_filename) > 20:
+                visible_filename = visible_filename[0:19] + '...'
         else:
             thumb = src
+            visible_filename = os.path.split(filename)[1]
         files.append({
             'thumb': thumb,
             'src': src,
@@ -159,11 +213,25 @@ def browse(request):
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
-            files = filter(lambda d: form.cleaned_data.get('q', '').lower() in d['visible_filename'].lower(), files)
+            query = form.cleaned_data.get('q', '').lower()
+            files = list(filter(lambda d: query in d[
+                         'visible_filename'].lower(), files))
     else:
         form = SearchForm()
-    context = RequestContext(request, {
+
+    show_dirs = getattr(settings, 'CKEDITOR_BROWSE_SHOW_DIRS', False)
+    dir_list = sorted(set(os.path.dirname(f['src'])
+                          for f in files), reverse=True)
+
+    # Ensures there are no objects created from Thumbs.db files - ran across
+    # this problem while developing on Windows
+    if os.name == 'nt':
+        files = [f for f in files if os.path.basename(f['src']) != 'Thumbs.db']
+
+    context = {
+        'show_dirs': show_dirs,
+        'dirs': dir_list,
         'files': files,
         'form': form
-    })
-    return render_to_response('ckeditor/browse.html', context)
+    }
+    return render(request, 'ckeditor/browse.html', context)

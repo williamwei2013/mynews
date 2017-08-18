@@ -5,17 +5,24 @@
 {% block block_title %}用户登录{% endblock %}
 
 
-{% block block_body %}
 
+  
+
+{% block block_body %}
+<link href="{% static 'css/news.css' %}" rel="stylesheet">  
+<script src="{% static 'js/jquery.js' %}"></script> 
+<script src="{% static 'js/news.js' %}"></script>
+    <!-- Fixed navbar -->
 
       <!-- Main component for a primary marketing message or call to action -->
-<link href="{% static 'css/login.css' %}" rel="stylesheet">   
-<div class="container">
+ 
+   <div class="row">
 
-
-      <div class="login">  
-
-<h4>用户登录 <small></small></h4>
+        <div class="col-sm-8 blog-main">
+    <div class="sidebar-module sidebar-module-inset">
+            <h4>LOGIN</h4>
+           
+      
 <form class="form-horizontal" method = 'post' enctype="multipart/form-data"  role="form">
   <div class="form-group">
     <label for="username" class="col-sm-2 control-label">用户名</label>
@@ -41,7 +48,7 @@
   
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
-      <button type="submit" class="btn btn-default">登录</button>
+      <button type="submit" class="btn btn-default zhuce">登录</button>
     </div>
   </div>
   {% if errors %}
@@ -50,37 +57,48 @@
 {% csrf_token %}
 
 </form>
+          </div>
+     
+        
 
 
-<!--
+  
 
-<input type="text" class="form-control" placeholder="Username" name="username">
-<input type="password" class="form-control" placeholder="Password" name="password">
- 
-  <label type="checkbox"><input type="checkbox" value="remmber-me">同意用户协议</label>
-  <button class="btn btn-lg btn-primary btn-block" type='submit'>登录</button>
-</form>
+        </div><!-- /.blog-main -->
+
+        <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+          <!-- <div class="sidebar-module sidebar-module-inset">
+            <h4>About</h4>
+            <p>健康生活网是为大家提供健康养生的资讯内容以及母婴健康小常识</p>
+            <p>健康生活网是为大家提供健康养生的资讯内容以及母婴健康小常识</p>
+          </div>-->
+          <div class="sidebar-module">
+            类别
+            <ol class="list-unstyled">
+              <li><a href="/">育儿</a></li>
+              <li><a href="about">关于我们</a></li>
+              <li><a href="#">养生</a></li>
+              <li><a href="#">医药</a></li>
+              <li><a href="#">男性</a></li>
+              <li><a href="#">女性</a></li>
+             
+            </ol>
+          </div>
+          <div class="sidebar-module">
+          关联网站
+            <ol class="list-unstyled">
+              <li><a href="#">一个勺子</a></li>
+              <li><a href="#">爱我别走</a></li>
+              <li><a href="#">快乐男声</a></li>
+            </ol>
+          </div>
+        </div><!-- /.blog-sidebar -->
+
+      </div><!-- /.row -->
 
 
 
--->
-</div>
-  </div>
 
-
-
- <!--!
-  <div class="col-md-3">
-  <p>今日最热</p>
-   {% if news_list %}
-  {% for news in news_list %}
-  <p class="text-left"> <ol><li>{{news.title}}</li></ol></p>
-    {% endfor %}
- {% endif %}
-  </div></div>
-</div>
-  <ol><li><a href="#">{{news.title}}</a></li></ol>
-</div> <!-- /container -->
 
 {% endblock %}
 

@@ -3,19 +3,16 @@ from __future__ import absolute_import
 import os
 from io import BytesIO
 
+from django.conf import settings
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
+from PIL import Image, ImageOps
+
 from ckeditor_uploader import utils
 
-try:
-    from PIL import Image, ImageOps
-except ImportError:
-    import Image
-    import ImageOps
 
-
-THUMBNAIL_SIZE = (75, 75)
+THUMBNAIL_SIZE = getattr(settings, "THUMBNAIL_SIZE", (75, 75))
 
 
 def image_verify(f):
@@ -28,10 +25,10 @@ def image_verify(f):
 def create_thumbnail(file_path):
     thumbnail_filename = utils.get_thumb_filename(file_path)
     thumbnail_format = utils.get_image_format(os.path.splitext(file_path)[1])
-    file_format = thumbnail_format.split('/')[1]
 
     image = default_storage.open(file_path)
     image = Image.open(image)
+    file_format = image.format
 
     # Convert to RGB if necessary
     # Thanks to Limodou on DjangoSnippets.org
